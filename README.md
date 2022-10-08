@@ -1,82 +1,59 @@
-# delegation-registry
+# Delegated NFT
 
-<img src="vault.png" width="300" />
+This is an example repository detailing how to use the [Delegate Cash](https://delegate.cash/) public utility for delegating access from one wallet to another.
 
-## Finalized Deployment
+This repo requires installing [foundry](https://getfoundry.sh), you can run the repo and tests by doing the following:
 
-|Chain|Address|
-|---|---|
-|Mainnet|[0x00000000000076A84feF008CDAbe6409d2FE638B](https://etherscan.io/address/0x00000000000076a84fef008cdabe6409d2fe638b)|
-|Polygon|[0x00000000000076A84feF008CDAbe6409d2FE638B](https://polygonscan.com/address/0x00000000000076a84fef008cdabe6409d2fe638b)|
-|Goerli|[0x00000000000076A84feF008CDAbe6409d2FE638B](https://goerli.etherscan.io/address/0x00000000000076a84fef008cdabe6409d2fe638b)|
-|Mumbai|[0x00000000000076A84feF008CDAbe6409d2FE638B](https://mumbai.polygonscan.com/address/0x00000000000076a84fef008cdabe6409d2fe638b)|
-
-If you'd like to get the DelegationRegistry on another EVM chain, anyone in the community can deploy to the same address! Simply run the script in [Deploy.s.sol](script/Deploy.s.sol) with the specified seed. The CREATE2 factory must be deployed at `0x0000000000FFe8B47B3e2130213B802212439497`, but this factory exists on 19 separate chains so shouldn't be an issue. If you've run a community deployment, open a PR adding the link to the above table.
-
-## Overview
-
-Welcome! If you're a programmer, view [the specific registry code here](src/DelegationRegistry.sol). If you want to discuss specific open questions, click on the "Issues" tab to leave a comment. If you're interested in integrating this standard into your token project or marketplace, we're in the process of creating example templates - or reach out directly via a [Twitter DM](https://twitter.com/0xfoobar).
-
-We have an exciting group of initial people circling around this standard, including foobar (hi!), punk6529 (open metaverse), loopify (loopiverse), andy8052 (fractional), purplehat (artblocks), emiliano (nftrentals), arran (proof), james (collabland), john (gnosis safe), wwhchung (manifoldxyz) tally labs and many more. The dream is to move from a fragmented world where no individual deployment gets serious use to a global registry where users can register their vault once and use it safely for a variety of airdrops & other claims! Please reach out if interested in helping make this a reality on either the technical, social, or integration side.
-
-## Standardization
-
-In the interest of broader visibility and adoption around this registry, we've started the process for considering this effort for an EIP (Ethereum Improvement Proposal), which can be found here: https://eips.ethereum.org/EIPS/eip-5639
-
-## Why delegation?
-
-Proving ownership of an asset to a third party application in the Ethereum ecosystem is common. Common examples include claiming airdrops, minting from collection whitelists, and verifying token ownership for a gated discord/telegram channel. Users frequently sign payloads of data to authenticate themselves before gaining access to perform some operation. However, this introduces the danger of accidentally signing a malicious transaction from a cold wallet vault.
-
-While a technical solution that "just works" may appear easy to code up, there's a reason no existing approaches have delighted users and hit mass adoption yet.
-- EIP712 signatures are not smart contract compatible. 
-- ENS names are a dangerous & clunky dependency not suitable for an EIP standard.
-- Some solutions are too specific or hardcoded for general reuse.
-
-## What features does this include?
-
-### Fully Onchain, No EIP 712 signatures
-Why? This is critical for smart contract composability, which cannot produce a private key signature. And while we could have two separate paths for delegation setup, one with smart contract calls and one with signature calls, this fragments adoption and developer use. Not to mention that allowing offchain signatures encourages people to interact with their vault and hotwallet in rapid succession, and accidental signatures can float around offchain with no easy way to revoke as we saw with the OpenSea "old ape offer" attack vector. More thoughts in [this tweet](https://twitter.com/0xfoobar/status/1557035539752181762).
-
-### Fully Immutable, No Admin Powers
-Why? Because governance is an attack vector. There should be none of it in a neutral trustless delegation standard. The standard is designed to be as flexible as possible, but upgrades are always possible by deploying a new registry with different functionality.
-
-### Fully Standalone, No External Dependencies
-Why? Because external dependencies are an unnecessary attack vector. 
-
-### Fully Identifiable, Clear Unique Method Names
-Why? Delegation is distinct from token ownership. Delegation implies the ability to claim or act on behalf of a token owner, but it does not imply the ability to move the token. So method names such as `balanceOf()` and `ownerOf()` should be avoided at all costs, replaced with clear method names that make it clear the hotwallet has delegation powers but not token ownership powers.
-
-### Reusable Global Registry w/ Same Address Across Multiple EVM Chains
-Why? For ease of use and adoption. It should also be a vanity address that's clearly distinguishable from others via CREATE2, either leading zeros or some fun prefix/postfix.
-
-## Why not existing solutions?
-
-Sincere appreciation for everyone who's taken a crack at this problem in the past with different tradeoffs. Comparison is done not to denigrate, but with the goal of hitting the best unified standard for mass adoption.
-
-ENS delegation via [EIP-5131](https://eips.ethereum.org/EIPS/eip-5131): ENS is an offshore foundation with a for-profit token that charges rent for every new domain registration. We applaud the widespread adoption it's gotten, however this is a dangerous dependency for what should be a timeless standard. Additionally, delegations for a fresh wallet should be free (only gas) rather than costing additional economic rents.
-
-wenew's approach via [HotWalletProxy](https://github.com/wenewlabs/public/blob/main/HotWalletProxy/HotWalletProxy.sol): This is the right directional approach, with an onchain registry that can be set via either a vault transaction or a vault signature submitted from a hot wallet. However it doesn't provide enough generalizability of drilling down into specific collections or specific tokens, the `ownerOf()` method naming overlaps with existing standards, and doesn't generalize to other types of delegation such as governance-specific standards. Delegation should be explicit rather than overwriting existing ERC721 method names.
-
-## How do I use it?
-
-Check out the [IDelegationRegistry.sol](src/IDelegationRegistry.sol) file. This is the interface to interact with, and contains the following methods:
-
-```code
-/// WRITE ///
-function delegateForAll(address delegate, bool value) external;
-function delegateForContract(address delegate, address contract_, bool value) external;
-function delegateForToken(address delegate, address contract_, uint256 tokenId, bool value) external;
-function revokeAllDelegates() external;
-function revokeDelegate(address delegate) external;
-function revokeSelf(address vault) external;
-/// READ ///
-function getDelegationsByDelegate(address delegate) external view returns (DelegationInfo[] memory);
-function getDelegatesForAll(address vault) external view returns (address[] memory);
-function getDelegatesForContract(address vault, address contract_) external view returns (address[] memory);
-function getDelegatesForToken(address vault, address contract_, uint256 tokenId) external view returns (address[] memory);
-function checkDelegateForAll(address delegate, address vault) external view returns (bool);
-function checkDelegateForContract(address delegate, address vault, address contract_) external view returns (bool);
-function checkDelegateForToken(address delegate, address vault, address contract_, uint256 tokenId) external view returns (bool);
+```sh
+forge build
+forge test
 ```
 
-As an NFT creator, the important ones to pay attention to are `getDelegationsByDelegate()`, which you can use on the website frontend to enumerate which vaults a specific hotwallet is delegated to act on behalf of, and `checkDelegateForToken()`, which can be called in your smart contract to ensure a hotwallet is acting on behalf of the proper vaults.
+## Delegate What?
+
+Glad you asked anon, [check this lovely diagram](https://twitter.com/delegatecash/status/1578033046984351744) for more details.
+
+> tl;dr please?
+
+You can keep your super-duper valuable ENS domain, ape, POAP or other crazy degen materials in a safe hot wallet, then grant a second wallet access to interact with other contracts on your behalf. 
+
+You control the permissions on the second wallet. If that wallet is compromised, the attacker has no access to the tokens in your cold wallet. 
+
+## Implementaion
+
+A basic example is detailed in this repo:
+
+```sh
+src/
+    -- DelegateClaimable.sol              # Example of NFT implemeting delegated claim logic
+    -- DelegationRegistry.sol             # Registry implementation
+    -- IDelegationRegistry.sol            # Registry public interface
+test/
+    -- DelegateClaim.t.sol                # tests
+```
+
+`DelegateClaimable` contains a `BaseOpenMintable721` contract, this is an extremely barebones ERC721 implementation that allows anyone to mint themselves a new NFT from the collection.
+
+You can imagine this as being an existing, extremely popular collection. Let's call them **Delegated Apes** (DAYC).
+
+In this example, we want to allow holders of Delegated Apes some exclusive access to a special minting of a second collection of NFTs, let's call these **Whitelisted Whales** (WWHALE).
+
+A new WWHALE should be *only* available to holders of DAYC, with *each* DAYC allowing *one* minting of a WWHALE. If a user has 2 DAYCs, they can mint 2 WWHALES.
+
+DAYC has pumped recently, and we care about the safety of DAYC holders. So we want to allow them to delegate minting of WWHALEs to a separate hot wallets, so they can keep their DAYC safe when calling the `claim` function.
+
+`DelegatedClaimable721` is an example implementation of a contract that allows a minting of a WWHALE but in a delegated way. It exposes a `claim` function that accepts the token ID of a DAYC, an address to mint the new WWHALE to, and (optionally) *an address separate to the caller that currently holds a DAYC*:
+
+```js
+
+    function claim(uint256 _tokenId, address _to) external returns (uint256 newTokenId);
+
+    function claim(uint256 _tokenId, address _to, address _vault) external returns (uint256 newTokenId);
+```
+
+If the caller passes the optional `_vault` argument, the contract will check:
+
+    - The `_vault` has a BAYC in its possession
+    - The `msg.sender` is authorized by the `IDelegationRegistry` to act on behalf of the vault, for that token/contract etc.
+
+You can see worked examples of this in the `/test` folder.    
