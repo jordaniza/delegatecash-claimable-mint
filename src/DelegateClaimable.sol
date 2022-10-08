@@ -101,10 +101,9 @@ contract DelegatedClaimable721 is ERC721 {
     /// @param claimant the address that initiated the claim request
     /// @param originalTokenId that was claimed for
     /// @param newTokenId that was minted
-    event Claimed(address indexed claimant, uint originalTokenId, uint newTokenId);
-    
+    event Claimed(address indexed claimant, uint256 originalTokenId, uint256 newTokenId);
+
     /// @notice emitted on a claim event if delegated
     /// @param vault the wallet that delegated access to the claimant and holds the original token
-    event DelegateClaimed(address indexed claimant, uint originalTokenId, uint newTokenId, address vault);
-
+    event DelegateClaimed(address indexed claimant, uint256 originalTokenId, uint256 newTokenId, address vault);
 }
