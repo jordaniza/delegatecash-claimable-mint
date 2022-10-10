@@ -2,37 +2,33 @@
 pragma solidity ^0.8.17;
 
 import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import "openzeppelin-contracts/contracts/utils/Counters.sol";
 import "./IDelegationRegistry.sol";
 
 /// @notice barebones NFT with open minting
 /// @dev add access control etc for production
 contract BaseOpenMintable721 is ERC721 {
-    using Counters for Counters.Counter;
-
-    Counters.Counter private _tokenIdCounter;
+    /// @notice numerical incrementing id of the latest token minted
+    uint private currentTokenId;
 
     constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {}
 
     /// @dev minting open to anyone
     /// @param _to the address of the recipient
     /// @return tokenId the newly minted tokenId
-    function mint(address _to) external returns (uint256 tokenId) {
-        tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
-        _safeMint(_to, tokenId);
+    function mint(address _to) external returns (uint256) {
+        currentTokenId++;
+        _safeMint(_to, currentTokenId);
+        return currentTokenId;
     }
 }
 
 /// @notice an example for an NFT contract where claiming is restricted to owners of a linked NFT.
 ///         claiming can be delegated to another address using the delegate cash registry for safe claiming.
 contract DelegatedClaimable721 is ERC721 {
-    using Counters for Counters.Counter;
-
     /* ------ Variables ------ */
 
-    /// @notice autoincrementing tokenId
-    Counters.Counter private _tokenIdCounter;
+    /// @notice numerical incrementing id of the latest token minted 
+    uint private currentTokenId;
 
     /// @notice address of the DelegationRegistry
     /// @dev see https://delegate.cash/ for more details
@@ -86,13 +82,12 @@ contract DelegatedClaimable721 is ERC721 {
     /// @param _to the address to mint the NFT
     /// @param _tokenId the numerical id of the original NFT that acts as the whitelist for this one
     /// @return newTokenId the newly minted tokenId
-    function _claim(address _to, uint256 _tokenId) internal returns (uint256 newTokenId) {
+    function _claim(address _to, uint256 _tokenId) internal returns (uint256) {
         require(!tokenIdClaimed[_tokenId], "Already claimed");
         tokenIdClaimed[_tokenId] = true;
-
-        newTokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
-        _safeMint(_to, newTokenId);
+        currentTokenId++;
+        _safeMint(_to, currentTokenId);
+        return currentTokenId;
     }
 
     /* ----- Events ----- */
