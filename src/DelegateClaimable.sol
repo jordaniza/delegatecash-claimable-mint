@@ -8,13 +8,13 @@ import "./IDelegationRegistry.sol";
 /// @dev add access control etc for production
 contract BaseOpenMintable721 is ERC721 {
     /// @notice numerical incrementing id of the latest token minted
-    uint private currentTokenId;
+    uint256 private currentTokenId;
 
     constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {}
 
     /// @dev minting open to anyone
     /// @param _to the address of the recipient
-    /// @return tokenId the newly minted tokenId
+    /// @return currentTokenId the newly minted tokenId
     function mint(address _to) external returns (uint256) {
         currentTokenId++;
         _safeMint(_to, currentTokenId);
@@ -27,8 +27,8 @@ contract BaseOpenMintable721 is ERC721 {
 contract DelegatedClaimable721 is ERC721 {
     /* ------ Variables ------ */
 
-    /// @notice numerical incrementing id of the latest token minted 
-    uint private currentTokenId;
+    /// @notice numerical incrementing id of the latest token minted
+    uint256 private currentTokenId;
 
     /// @notice address of the DelegationRegistry
     /// @dev see https://delegate.cash/ for more details
@@ -80,11 +80,12 @@ contract DelegatedClaimable721 is ERC721 {
 
     /// @notice internal method to mint the NFT to a new owner
     /// @param _to the address to mint the NFT
-    /// @param _tokenId the numerical id of the original NFT that acts as the whitelist for this one
-    /// @return newTokenId the newly minted tokenId
-    function _claim(address _to, uint256 _tokenId) internal returns (uint256) {
-        require(!tokenIdClaimed[_tokenId], "Already claimed");
-        tokenIdClaimed[_tokenId] = true;
+    /// @param _tokenIdOriginal the numerical id of the original NFT that acts as the whitelist for this one
+    /// @return currentTokenId of the newly minted NFT in this collection
+    function _claim(address _to, uint256 _tokenIdOriginal) internal returns (uint256) {
+        require(!tokenIdClaimed[_tokenIdOriginal], "Already claimed");
+        tokenIdClaimed[_tokenIdOriginal] = true;
+
         currentTokenId++;
         _safeMint(_to, currentTokenId);
         return currentTokenId;

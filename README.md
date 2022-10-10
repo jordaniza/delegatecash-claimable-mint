@@ -15,7 +15,7 @@ Glad you asked anon, [check this lovely diagram](https://twitter.com/delegatecas
 
 > tl;dr please?
 
-You can keep your super-duper valuable ENS domain, ape, POAP or other crazy degen materials in a safe hot wallet, then grant a second wallet access to interact with other contracts on your behalf. 
+You can keep your super-duper valuable ENS domain, ape, POAP or other crazy degen materials in a safe cold wallet, then grant a second wallet access to interact with other contracts on your behalf. 
 
 You control the permissions on the second wallet. If that wallet is compromised, the attacker has no access to the tokens in your cold wallet. 
 
@@ -56,4 +56,12 @@ If the caller passes the optional `_vault` argument, the contract will check:
     - The `_vault` has a BAYC in its possession
     - The `msg.sender` is authorized by the `IDelegationRegistry` to act on behalf of the vault, for that token/contract etc.
 
-You can see worked examples of this in the `/test` folder.    
+# Running for yourself
+
+You can see a worked example of the contracts in `/script/DelegateClaimable.s.sol`, run against a network fork to test with the real delegation registry on mainnet (this doesn't cost anything):
+
+```sh
+forge script DelegateClaim --fork-url https://rpc.ankr.com/eth -vvvv
+```
+
+If you want additional usage examples, check out the [test folder](./test)
